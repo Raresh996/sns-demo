@@ -1,5 +1,6 @@
 package io.raresconea.snsdemo.controller;
 
+import io.raresconea.snsdemo.dto.SubscriptionFilterDto;
 import io.raresconea.snsdemo.dto.TopicDto;
 import io.raresconea.snsdemo.dto.TopicSubscriptionDto;
 import io.raresconea.snsdemo.dto.TopicMessageDto;
@@ -24,8 +25,13 @@ public class SnsController {
 
 
     @PostMapping("/subscriptions")
-    public String subscribeEmail(@RequestBody TopicSubscriptionDto subscription) {
+    public String subscribe(@RequestBody TopicSubscriptionDto subscription) {
         return snsService.createSubscription(subscription);
+    }
+
+    @PostMapping("/subscriptions/filter-policies")
+    public String applyFilterPolicies(@RequestBody SubscriptionFilterDto subscriptionFilter) {
+        return snsService.applyFilterPolicies(subscriptionFilter);
     }
 
     @PostMapping("/messages")

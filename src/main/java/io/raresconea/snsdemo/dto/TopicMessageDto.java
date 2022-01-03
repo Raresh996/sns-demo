@@ -7,4 +7,6 @@ public class TopicMessageDto {
     private String arn;
     private String subject;
     private String content;
+    private String attributeName;
+    private String attributeValue;
 }

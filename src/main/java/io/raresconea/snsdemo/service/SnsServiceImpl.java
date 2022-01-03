@@ -1,13 +1,10 @@
 package io.raresconea.snsdemo.service;
 
 import com.amazonaws.services.sns.AmazonSNSClient;
-import com.amazonaws.services.sns.model.CreateTopicRequest;
-import com.amazonaws.services.sns.model.CreateTopicResult;
-import com.amazonaws.services.sns.model.PublishRequest;
-import com.amazonaws.services.sns.model.SubscribeRequest;
-import io.raresconea.snsdemo.dto.TopicDto;
-import io.raresconea.snsdemo.dto.TopicSubscriptionDto;
-import io.raresconea.snsdemo.dto.TopicMessageDto;
+import com.amazonaws.services.sns.model.*;
+import com.amazonaws.util.StringUtils;
+import io.raresconea.snsdemo.dto.*;
+import io.raresconea.snsdemo.helper.SNSMessageFilterPolicy;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,8 +36,7 @@ public class SnsServiceImpl implements SnsService {
                 subscription.getEndpoint());
 
         try {
-            amazonSNSClient.subscribe(subscribeRequest);
-            return "Please confirm email subscription";
+            return amazonSNSClient.subscribe(subscribeRequest).getSubscriptionArn();
         } catch (Exception e) {
             log.error(e.getMessage());
             return "Error ocured! Please try again later!";
@@ -54,9 +50,33 @@ public class SnsServiceImpl implements SnsService {
                 topicMessage.getContent(),
                 topicMessage.getSubject());
 
+        if (!StringUtils.isNullOrEmpty(topicMessage.getAttributeName()) && !StringUtils.isNullOrEmpty(topicMessage.getAttributeValue())) {
+            MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
+            messageAttributeValue.setDataType("string");
+            messageAttributeValue.setStringValue(topicMessage.getAttributeValue());
+
+            publishRequest.addMessageAttributesEntry(topicMessage.getAttributeName(), messageAttributeValue);
+        }
+
+
         try {
             amazonSNSClient.publish(publishRequest);
             return "Message published successfully!";
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return "Error ocured! Please try again later";
+        }
+    }
+
+    @Override
+    public String applyFilterPolicies(SubscriptionFilterDto subscriptionFilter) {
+        SNSMessageFilterPolicy fp = new SNSMessageFilterPolicy();
+        fp.addAttribute(subscriptionFilter.getAttributeName(), subscriptionFilter.getAttributeValue());
+
+        try {
+            fp.apply(amazonSNSClient, subscriptionFilter.getSubscriptionArn());
+
+            return "Subscription modified successfully";
         } catch (Exception e) {
             log.error(e.getMessage());
             return "Error ocured! Please try again later";
