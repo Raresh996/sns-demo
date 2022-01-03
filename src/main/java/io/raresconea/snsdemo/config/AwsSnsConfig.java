@@ -17,7 +17,7 @@ public class AwsSnsConfig {
     @Bean
     public AmazonSNSClient amazonSNSClient() {
         return (AmazonSNSClient) AmazonSNSClientBuilder.standard()
-                .withRegion(Regions.DEFAULT_REGION)
+                .withRegion(Regions.EU_CENTRAL_1)
                 .withCredentials(new AWSStaticCredentialsProvider(
                         new BasicAWSCredentials(
                                 awsConfigProperties.getAccessKey(),

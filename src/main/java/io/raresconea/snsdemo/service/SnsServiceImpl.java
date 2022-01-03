@@ -2,6 +2,8 @@ package io.raresconea.snsdemo.service;
 
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.*;
+import com.amazonaws.services.sns.util.Topics;
+import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.util.StringUtils;
 import io.raresconea.snsdemo.dto.*;
 import io.raresconea.snsdemo.helper.SNSMessageFilterPolicy;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class SnsServiceImpl implements SnsService {
     private final AmazonSNSClient amazonSNSClient;
+    private final AmazonSQSClient amazonSQSClient;
 
     @Override
     public String createTopic(TopicDto topic) {
@@ -35,7 +38,12 @@ public class SnsServiceImpl implements SnsService {
                 subscription.getSubscriptionProtocol().name,
                 subscription.getEndpoint());
 
+
         try {
+            if (SubscriptionProtocol.SQS.equals(subscription.getSubscriptionProtocol())) {
+                return Topics.subscribeQueue(amazonSNSClient, amazonSQSClient, subscription.getArn(), subscription.getEndpoint());
+            }
+
             return amazonSNSClient.subscribe(subscribeRequest).getSubscriptionArn();
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -52,12 +60,11 @@ public class SnsServiceImpl implements SnsService {
 
         if (!StringUtils.isNullOrEmpty(topicMessage.getAttributeName()) && !StringUtils.isNullOrEmpty(topicMessage.getAttributeValue())) {
             MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-            messageAttributeValue.setDataType("string");
+            messageAttributeValue.setDataType("String");
             messageAttributeValue.setStringValue(topicMessage.getAttributeValue());
 
             publishRequest.addMessageAttributesEntry(topicMessage.getAttributeName(), messageAttributeValue);
         }
-
 
         try {
             amazonSNSClient.publish(publishRequest);
