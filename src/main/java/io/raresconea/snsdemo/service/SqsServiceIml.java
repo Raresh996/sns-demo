@@ -49,12 +49,12 @@ public class SqsServiceIml implements SqsService {
 
     @Override
     public List<Message> getMessage(String queueUrl) {
-        return amazonSQSClient.receiveMessage(queueUrl)
-                .getMessages();
-    }
+        List<Message> messages = amazonSQSClient.receiveMessage(queueUrl).getMessages();
 
-    @SqsListener("queue-2")
-    public void getMessageAsync(String message) {
-        Log.info("Message from SQS Queue: " + message);
+        for (Message m : messages) {
+            amazonSQSClient.deleteMessage(queueUrl, m.getReceiptHandle());
+        }
+
+        return messages;
     }
 }
