@@ -6,8 +6,10 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import io.raresconea.snsdemo.dto.QueueDto;
 import io.raresconea.snsdemo.dto.SqsMessageDto;
+import jdk.internal.org.jline.utils.Log;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.aws.messaging.listener.annotation.SqsListener;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -49,5 +51,10 @@ public class SqsServiceIml implements SqsService {
     public List<Message> getMessage(String queueUrl) {
         return amazonSQSClient.receiveMessage(queueUrl)
                 .getMessages();
+    }
+
+    @SqsListener("queue-2")
+    public void getMessageAsync(String message) {
+        Log.info("Message from SQS Queue: " + message);
     }
 }
